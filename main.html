@@ -1,0 +1,173 @@
+<html>
+    <head>
+        <title>FarApp Coding Interview</title>
+        <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    </head>
+    <body>
+        <button id="sortName">Sort by name </button><br>
+        <button id="sortEmail">Sort by email</button><br>
+        <table id="people">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+            </tr>
+            <td id="allnames"></td>
+            <td id="allemails"></td>
+            <td id="allphones"></td>
+        </table>
+        <br>
+        <h1>Add a new person!</h1>
+        <form id="addPerson">
+            Full Name: <input type="text" id="name" name="name"><br>
+            Email: <input type="text" id="email" name="email"><br>
+            Phone: <input type="text" id="phone" name="phone"><br>
+            <input type="submit" value="Submit">
+        </form>
+        <form id="searchFor">
+            Enter a full name to get email and phone:
+            <input type="text" id="searchName">
+            <input type="submit" value="Search">
+        </form>
+    </body>
+
+
+
+<script>
+    //arrays to store our results 
+    var names = []; 
+    var emails = [];
+    var phones = [];
+    var numPeople=0;
+
+    getData();
+    storeData();
+    displayTable();
+
+
+    function getData()
+    {
+        //API call to retrieve 1000 first+last name pairs 
+        for (let i=0; i<1000; i++)
+        {
+            //var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+            var req = new XMLHttpRequest();
+            var payload = {};
+            req.open('GET', 'https://randomuser.me/api/', false);
+            req.send(); //request json data
+            var response = JSON.parse(req.responseText); //response variable holds all the API data returned 
+
+            //name
+            var name='';
+            name+=response.results[0].name.first;
+            name+=' ';
+            name+=response.results[0].name.last;
+            names.push(name);
+            //email
+            var email = response.results[0].email;
+            emails.push(email);
+            //phone
+            var phone = response.results[0].cell;
+            phones.push(phone);
+        }
+    }
+
+
+    function storeData() //storees all 1000 entries 
+    {
+        //push into local storage
+        for (let j=0; j<names.length; j++)
+        {
+            localStorage.setItem("name"+j, names[j]); //key=array index, value=name (first+last)
+            localStorage.setItem("email"+j, emails[j]); //key=array index, value=email
+            localStorage.setItem("phone"+j, phones[j]); //key=array index, value=phones
+            numPeople++;
+        }
+        console.log("number of people: " + numPeople);
+    }
+
+    function displayTable() //displays the entire table 
+    { 
+        //make sure all previous data is cleared so we don't end up with duplicates 
+        $('#allnames tr').remove();
+        $('#allemails tr').remove();
+        $('#allphones tr').remove();
+
+        for (let j=0; j<names.length; j++)
+        {
+            $('#allnames').append('<tr><td>'+names[j]+'</td></tr>'); //append to table 
+            $('#allemails').append('<tr><td>'+emails[j]+'</td></tr>'); //append to table 
+            $('#allphones').append('<tr><td>'+phones[j]+'</td></tr>'); //append to table 
+        }
+    }
+
+    $('#addPerson').submit(function(e){ //form handling by jquery
+        e.preventDefault();
+        numPeople++;
+        var name = $('input#name').val();
+        names.push(name);
+        var email = $('input#email').val();
+        emails.push(email);
+        var phone = $('input#phone').val();
+        phones.push(phone);
+
+        //validate
+        if (phone.length <7)
+        {
+            alert("Phone number is too short!")
+        }
+        else
+        {
+            //store locally 
+            localStorage.setItem("name"+numPeople,name);
+            localStorage.setItem("email"+numPeople,email);
+            localStorage.setItem("phone"+numPeople,phone);
+        
+            //append to table
+            $('#allnames').append('<tr><td>'+name+'</td></tr>'); //append to table 
+            $('#allemails').append('<tr><td>'+email+'</td></tr>'); //append to table 
+            $('#allphones').append('<tr><td>'+phone+'</td></tr>'); //append to table 
+        }
+        //console.log("number of people: " + numPeople);
+    })
+
+    //the sort functions have bugs, which I ran out of time for fixing 
+    $("#sortName").click(function(){
+        names.sort();
+        displayTable(); //should display all entries sorted by alphabetical order for name
+    });
+   
+    $("#sortEmail").click(function(){
+        emails.sort();
+        displayTable();
+    });
+
+
+    $('#searchFor').submit(function(e){ //form handling by jquery
+        e.preventDefault();
+        var name = $('input#searchName').val();
+        console.log(name);
+        let email=''
+        let phone=''
+        let i=0
+        let index=-1;
+        for (i=0; i<numPeople; i++)
+        {
+            if (names[i] == name)
+            {
+                index = i;
+                break;
+            }
+        }
+        if (index >=0)
+        {
+            alert("Name: "+names[index]+" Phone: "+phones[index]+" Email: "+emails[index])
+        }
+        else
+        {
+            alert("No entries exist with the speficied name.")
+        }
+        console.log("index:"+index);
+    });
+</script>
+</html>
